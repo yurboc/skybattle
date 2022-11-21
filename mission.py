@@ -1,5 +1,7 @@
 import os
 import json
+import math
+import copy
 
 class Options:
     def __init__(self):
@@ -34,6 +36,9 @@ class Options:
 
     def printRawData(self):
         print(self.rawData)
+
+    def getRawData(self):
+        return self.rawData
 
     def hasData(self):
         return True if self.rawData else False
@@ -75,6 +80,8 @@ class Mission:
         self.mcuIconsDict = dict()
         self.coalitionsAndForce = dict()
         self.frontLineMcuIconPairs = []
+        self.frontLineMcuIcons = []
+        self.frontLineString = ""
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
@@ -156,11 +163,62 @@ class Mission:
                 tarForce = self.coalitionsAndForce[tarIndex]["force"]
                 if curCoalition == tarCoalition:
                     continue
-                self.frontLineMcuIconPairs.append({"left": mcuIcon, "rigth": tarMcuIcon, "leftForce": curForce, "rigthForce": tarForce})
+                self.frontLineMcuIconPairs.append({"left": mcuIcon, "rigth": tarMcuIcon, "leftForce": curForce, "rightForce": tarForce})
                 pairsCount += 1
         print(f"Front Line pairs prepared: {pairsCount} pairs")
         #print(f"======= BEGIN =====")
         #print(f"=====  2 --> 1  ===")
         #for pair in self.frontLineMcuIconPairs:
-        #    print(f"  {pair['leftForce']}:{pair['left'].options['Index']} --> {pair['rigth'].options['Index']}:{pair['rigthForce']}")
+        #    print(f"  {pair['leftForce']}:{pair['left'].options['Index']} --> {pair['rigth'].options['Index']}:{pair['rightForce']}")
         #print(f"======= END =======")
+
+    def calcFrontLine(self):
+        self.frontLineMcuIcons = []
+        nextIconId = 1000
+        for pair in self.frontLineMcuIconPairs:
+            leftMcuIcon = pair['left']
+            rightMcuIcon = pair['rigth']
+            leftForce = pair['leftForce']
+            rightForce = pair['rightForce']
+
+            x1 = float(leftMcuIcon.options["XPos"])
+            y1 = float(leftMcuIcon.options["YPos"])
+            z1 = float(leftMcuIcon.options["ZPos"])
+            x2 = float(rightMcuIcon.options["XPos"])
+            y2 = float(rightMcuIcon.options["YPos"])
+            z2 = float(rightMcuIcon.options["ZPos"])
+
+            #dist2d = math.sqrt(math.pow(x2-x1, 2)                      + math.pow(z2-z1, 2)) # sqrt(dx^2        + dz^2)
+            #dist3d = math.sqrt(math.pow(x2-x1, 2) + math.pow(y2-y1, 2) + math.pow(z2-z1, 2)) # sqrt(dx^2 + dy^2 + dz^2)
+            totalForce = leftForce + rightForce
+            distFromLeft = (leftForce / totalForce)
+            xF = x1 + (x2-x1)*distFromLeft
+            yF = y1 + (y2-y1)*distFromLeft
+            zF = z1 + (z2-z1)*distFromLeft
+
+            nextIconId += 1
+            zMcuIcon = copy.deepcopy(leftMcuIcon)
+            zMcuIcon.options["Index"] = nextIconId
+            zMcuIcon.options["XPos"] = xF
+            zMcuIcon.options["YPos"] = yF
+            zMcuIcon.options["ZPos"] = zF
+            zMcuIcon.options["Coalitions"] = [1, 2]
+            #print(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
+            self.frontLineMcuIcons.append(zMcuIcon)
+        print(f"Front Line generated up to {nextIconId} point")
+
+    def frontLineToString(self):
+        self.frontLineString = "# Mission File Version = 1.0;\r\n"
+        self.frontLineString += "\r\n"
+        self.frontLineString += "Options\r\n"
+        self.frontLineString += self.options.getRawData()
+        for mcuIcon in self.frontLineMcuIcons:
+            self.frontLineString += "\r\n"
+            self.frontLineString += "MCU_Icon\r\n"
+            for option in mcuIcon.options:
+                self.frontLineString += f"  {option} = {mcuIcon.options[option]};\r\n"
+        self.frontLineString += "\r\n"
+        self.frontLineString += "# end of file"
+
+    def printFrontLineAsString(self):
+        print(self.frontLineString)
