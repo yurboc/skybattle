@@ -71,14 +71,18 @@ class MCU_Icon:
 class Mission:
     def __init__(self):
         self.options = Options()
-        self.mcuIcons = []
+        self.mcuIconsArr = []
+        self.mcuIconsDict = dict()
+        self.coalitionsAndForce = dict()
+        self.frontLineMcuIconPairs = []
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
         self.options.loadOptionsFromFile(filePath)
 
         # Load all MCU_Icon from file
-        self.mcuIcons = []
+        self.mcuIconsArr = []
+        self.mcuIconsDict = dict()
         itemsCount = 0
         print(f"Load MCU_Icon items from file: {os.path.basename(filePath)}")
         with open(filePath, "r") as f:
@@ -100,40 +104,63 @@ class Mission:
                 # End of "Options" block
                 if line.startswith("}"):
                     currentMcuStr += line
-                    self.mcuIcons.append(MCU_Icon(currentMcuStr))
+                    currentMcuIcon = MCU_Icon(currentMcuStr)
+                    currentMcuIcon.parse()
+                    self.mcuIconsArr.append(currentMcuIcon)
+                    self.mcuIconsDict[currentMcuIcon.options["Index"]] = currentMcuIcon
                     itemsCount += 1
                     currentMcuStr = ""
                     foundMCU = False
                     continue
         print(f"Load MCU_Icon done: {itemsCount} items")
 
-        # Parse all MCU_Icon: from String to Object
-        for mcuIcon in self.mcuIcons:
-            mcuIcon.parse()
-        print("Load and parse done!")
-
     def printMissionStat(self):
         print(f"===== BEGIN =====")
         print(f"Has Options    : {self.options.hasData()}")
-        print(f"MCU_Icon count : {len(self.mcuIcons)}")
+        print(f"MCU_Icon count : {len(self.mcuIconsArr)} total, {len(self.mcuIconsDict)} unique")
         #print(f"==== OPTIONS ====")
         #self.options.printRawData()
         #print(f"=== MCU_ICONS ===")
         #self.mcuIcons[0].printRawData()
         print(f"====== END ======")
 
-    def makeCoalitionAndForce(self):
-        res = []
-        for mcuIcon in self.mcuIcons:
-            curIndex = mcuIcon.options['Index']
+    def calcCoalitionAndForce(self):
+        self.coalitionsAndForce = dict()
+        for mcuIcon in self.mcuIconsArr:
+            curIndex = int(mcuIcon.options['Index'])
             curCoalition = mcuIcon.options['Coalitions'][0]
             curForce = 50
-            res.append({"index": curIndex, "coalition": curCoalition, "force": curForce})
-        return res
+            self.coalitionsAndForce[curIndex] = {"coalition": curCoalition, "force": curForce}
+        print("Coalitions calculated!")
 
     def saveCoalitionForceJson(self, filePath):
-        resObj = self.makeCoalitionAndForce()
-        resJson = json.dumps(resObj, indent=2)
+        resJson = json.dumps(self.coalitionsAndForce, indent=2)
         with open(filePath, "w") as f:
             f.write(resJson)
         print("Coalitions saved to JSON!")
+
+    def calcFrontLinePairs(self):
+        self.frontLineMcuIconPairs = []
+        pairsCount = 0
+        for mcuIcon in self.mcuIconsArr:
+            curIndex = int(mcuIcon.options['Index'])
+            curCoalition = self.coalitionsAndForce[curIndex]["coalition"]
+            curForce = self.coalitionsAndForce[curIndex]["force"]
+            curTargets = mcuIcon.options['Targets']
+            if curCoalition != 2: # remove duplicates: save only "2 --> 1"
+                continue
+            for target in curTargets:
+                tarIndex = target
+                tarMcuIcon = self.mcuIconsDict[tarIndex]
+                tarCoalition = self.coalitionsAndForce[tarIndex]["coalition"]
+                tarForce = self.coalitionsAndForce[tarIndex]["force"]
+                if curCoalition == tarCoalition:
+                    continue
+                self.frontLineMcuIconPairs.append({"left": mcuIcon, "rigth": tarMcuIcon, "leftForce": curForce, "rigthForce": tarForce})
+                pairsCount += 1
+        print(f"Front Line pairs prepared: {pairsCount} pairs")
+        #print(f"======= BEGIN =====")
+        #print(f"=====  2 --> 1  ===")
+        #for pair in self.frontLineMcuIconPairs:
+        #    print(f"  {pair['leftForce']}:{pair['left'].options['Index']} --> {pair['rigth'].options['Index']}:{pair['rigthForce']}")
+        #print(f"======= END =======")

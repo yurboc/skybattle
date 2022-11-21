@@ -36,4 +36,8 @@ if __name__ == '__main__':
     mission.printMissionStat()
 
     # Save Indexes, Coalitions and Forces to JSON
+    mission.calcCoalitionAndForce()
     mission.saveCoalitionForceJson(coalitions_out_path)
+
+    # Prepare Front Line
+    mission.calcFrontLinePairs()
