@@ -121,3 +121,19 @@ class Mission:
         #print(f"=== MCU_ICONS ===")
         #self.mcuIcons[0].printRawData()
         print(f"====== END ======")
+
+    def makeCoalitionAndForce(self):
+        res = []
+        for mcuIcon in self.mcuIcons:
+            curIndex = mcuIcon.options['Index']
+            curCoalition = mcuIcon.options['Coalitions'][0]
+            curForce = 50
+            res.append({"index": curIndex, "coalition": curCoalition, "force": curForce})
+        return res
+
+    def saveCoalitionForceJson(self, filePath):
+        resObj = self.makeCoalitionAndForce()
+        resJson = json.dumps(resObj, indent=2)
+        with open(filePath, "w") as f:
+            f.write(resJson)
+        print("Coalitions saved to JSON!")
