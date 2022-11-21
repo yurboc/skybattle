@@ -208,17 +208,24 @@ class Mission:
         print(f"Front Line generated up to {nextIconId} point")
 
     def frontLineToString(self):
-        self.frontLineString = "# Mission File Version = 1.0;\r\n"
-        self.frontLineString += "\r\n"
-        self.frontLineString += "Options\r\n"
+        self.frontLineString = "# Mission File Version = 1.0;\n"
+        self.frontLineString += "\n"
+        self.frontLineString += "Options\n"
         self.frontLineString += self.options.getRawData()
         for mcuIcon in self.frontLineMcuIcons:
-            self.frontLineString += "\r\n"
-            self.frontLineString += "MCU_Icon\r\n"
+            self.frontLineString += "\n"
+            self.frontLineString += "MCU_Icon\n"
+            self.frontLineString += "{\n"
             for option in mcuIcon.options:
-                self.frontLineString += f"  {option} = {mcuIcon.options[option]};\r\n"
-        self.frontLineString += "\r\n"
+                self.frontLineString += f"  {option} = {mcuIcon.options[option]};\n"
+            self.frontLineString += "}\n"
+        self.frontLineString += "\n"
         self.frontLineString += "# end of file"
 
     def printFrontLineAsString(self):
         print(self.frontLineString)
+
+    def saveFrontLineToFile(self, filePath):
+        with open(filePath, "w") as f:
+            f.write(self.frontLineString)
+        print("Front Line saved to Mission file!")

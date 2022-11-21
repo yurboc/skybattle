@@ -10,7 +10,6 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--mission-in-file', type=str, dest='mis_in', action='store', help='Path to input mission file')
     parser.add_argument('-o', '--mission-out-file', type=str, dest='mis_out', action='store', help='Path to output mission file')
     parser.add_argument('-c', '--coal-json-file', type=str, dest='coal_out', action='store', help='Path to output coalitions JSON')
-    parser.add_argument('-f', '--front-line', dest='do_front_line', action='store_true', default=False, help='Generate front line')
 
     # Show help if no arguments provided
     if len(sys.argv)==1:
@@ -43,4 +42,5 @@ if __name__ == '__main__':
     mission.calcFrontLinePairs()
     mission.calcFrontLine()
     mission.frontLineToString()
-    mission.printFrontLineAsString()
+    #mission.printFrontLineAsString()
+    mission.saveFrontLineToFile(mission_out_path)
