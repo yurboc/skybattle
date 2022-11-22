@@ -41,6 +41,7 @@ if __name__ == '__main__':
     # Prepare Front Line
     mission.calcFrontLinePairs()
     mission.calcFrontLine()
+    mission.directFrontLine()
     mission.frontLineToString()
     #mission.printFrontLineAsString()
     mission.saveFrontLineToFile(mission_out_path)

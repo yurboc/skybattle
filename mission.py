@@ -207,6 +207,41 @@ class Mission:
             self.frontLineMcuIcons.append(zMcuIcon)
         print(f"Front Line generated up to {nextIconId} point")
 
+    def calcDistance(self, p1, p2):
+        dX = p2.options["XPos"] - p1.options["XPos"]
+        dY = p2.options["YPos"] - p1.options["YPos"]
+        dZ = p2.options["ZPos"] - p1.options["ZPos"]
+        D = math.sqrt(math.pow(dX, 2) + math.pow(dY, 2) + math.pow(dZ, 2))
+        return D
+
+    def directFrontLine(self):
+        donePoints = []
+        if len(self.frontLineMcuIcons) == 0:
+            return
+        
+        firstPoint = self.frontLineMcuIcons[0]
+        currentPoint = firstPoint
+        self.frontLineMcuIcons.remove(currentPoint)
+        donePoints.append(currentPoint)
+
+        while self.frontLineMcuIcons:
+            nextPoint = self.frontLineMcuIcons[0]
+            minD = self.calcDistance(currentPoint, nextPoint)
+            for point in self.frontLineMcuIcons:
+                d = self.calcDistance(currentPoint, point)
+                if d <= minD:
+                    minD = d
+                    nextPoint = point
+            donePoints.append(nextPoint)
+            self.frontLineMcuIcons.remove(nextPoint)
+            currentPoint.options["Targets"] = [nextPoint.options["Index"]]
+            currentPoint = nextPoint
+
+        currentPoint.options["Targets"] = [firstPoint.options["Index"]]
+        self.frontLineMcuIcons = donePoints
+        print("Front Line directed")
+
+
     def frontLineToString(self):
         self.frontLineString = "# Mission File Version = 1.0;\n"
         self.frontLineString += "\n"
