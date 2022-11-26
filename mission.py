@@ -2,6 +2,7 @@ import os
 import json
 import math
 import copy
+from PIL import Image, ImageDraw
 
 class Options:
     def __init__(self):
@@ -72,16 +73,93 @@ class MCU_Icon:
             #print(f"{optionName}:{optionValue}")
         #print(self.options)
         #print(f"===== ITEM END =====")
+    def x(self):
+        return self.options['XPos']
+    def y(self):
+        return self.options['YPos']
+    def z(self):
+        return self.options['ZPos']
+
+class Visualization:
+    def __init__(self):
+        self.minX = 0
+        self.minY = 0
+        self.minZ = 0
+        self.maxX = 0
+        self.maxY = 0
+        self.maxZ = 0
+        self.kX = 1 # X(picture) = X(orig) * kX
+        self.kY = 1 # Y(picture) = Z(orig) * kY
+        self.kZ = 1 # Z(picture) = Z(orig) * kZ
+        self.imgW = 2048 # image X: 0..1023
+        self.imgH = 768  # image Z: 0..767
+        self.imgF = 10   # frame: 10 px: example for X: (0..9), 10..1033, (1034..1043)
+        self.cnvW = self.imgW + 2 * self.imgF # canvas X: image + frame
+        self.cnvH = self.imgH + 2 * self.imgF # canvas Z: image + frame
+        self.imgX1 = self.imgF
+        self.imgY1 = self.imgF
+        self.imgX2 = self.imgX1 + self.imgW - 1
+        self.imgY2 = self.imgY1 + self.imgH - 1
+
+        self.pointR = 3 # point radius (R = D/2)
+        self.pointW = 2 # point line width
+        self.colorPointFill = {1: ((200, 150, 150, 0)), 2: ((150, 150, 200, 0))}
+        self.colorPointLine = {1: ((200, 0, 0, 0)), 2: ((0, 0, 200, 0))}
+        self.colorTargetLine = {1: ((255, 200, 200, 0)), 2: ((200, 200, 255, 0))}
+        self.colorTargetLineDiff = (0, 200, 0, 0)
+        self.colorTargetFrontLine = (200, 0, 200, 0)
+        self.colorPointFrontFill = (255, 255, 200, 0)
+        self.colorPointFrontLine = (200, 200, 100, 0)
+
+        self.img = Image.new('RGB', (self.cnvW, self.cnvH), (230, 230, 230, 0))
+        self.draw = ImageDraw.Draw(self.img)
+        self.draw.rectangle([(0, 0), (self.cnvW-1, self.imgY1)], (255, 255, 255, 0), (200, 200, 200, 0))
+        self.draw.rectangle([(0, 0), (self.imgX1, self.cnvH-1)], (255, 255, 255, 0), (200, 200, 200, 0))
+        self.draw.rectangle([(self.cnvW-1, self.cnvH-1), (self.imgX2+1, 0)], (255, 255, 255, 0), (200, 200, 200, 0))
+        self.draw.rectangle([(self.cnvW-1, self.cnvH-1), (0, self.imgY2+1)], (255, 255, 255, 0), (200, 200, 200, 0))
+
+    def mapMcuPointToImage(self, mcuPoint):
+        x = (mcuPoint.x() - self.minX) * self.kX + self.imgF
+        y = (mcuPoint.z() - self.minZ) * self.kZ + self.imgF
+        return (int(x), int(y))
+
+    def placePoint(self, mcuIcon):
+        (x,y) = self.mapMcuPointToImage(mcuIcon)
+        x1 = x-self.pointR
+        y1 = y-self.pointR
+        x2 = x+self.pointR
+        y2 = y+self.pointR
+        if len(mcuIcon.options['Coalitions']) == 1:
+            self.draw.ellipse([(x1,y1),(x2,y2)], self.colorPointFill[mcuIcon.options['Coalitions'][0]], self.colorPointLine[mcuIcon.options['Coalitions'][0]])
+        else:
+            self.draw.ellipse([(x1,y1),(x2,y2)], self.colorPointFrontFill, self.colorPointFrontLine)
+
+    def placeLine(self, mcuIcon1, mcuIcon2, isFrontLine=False):
+        (x1,y1) = self.mapMcuPointToImage(mcuIcon1)
+        (x2,y2) = self.mapMcuPointToImage(mcuIcon2)
+        if isFrontLine:
+            color = self.colorTargetFrontLine
+            width = 3
+        elif mcuIcon1.options['Coalitions'][0] == mcuIcon2.options['Coalitions'][0]:
+            color = self.colorTargetLine[mcuIcon1.options['Coalitions'][0]]
+            width = 1
+        else:
+            color = self.colorTargetLineDiff
+            width = 1
+        self.draw.line([(x1,y1),(x2,y2)], color, width)
 
 class Mission:
     def __init__(self):
         self.options = Options()
+        self.visual = Visualization()
         self.mcuIconsArr = []
         self.mcuIconsDict = dict()
         self.coalitionsAndForce = dict()
         self.frontLineMcuIconPairs = []
-        self.frontLineMcuIcons = []
+        self.frontLineMcuIconsArr = []
+        self.frontLineMcuIconsDict = dict()
         self.frontLineString = ""
+        self.startFrontLineId = 1000
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
@@ -173,8 +251,9 @@ class Mission:
         #print(f"======= END =======")
 
     def calcFrontLine(self):
-        self.frontLineMcuIcons = []
-        nextIconId = 1000
+        self.frontLineMcuIconsArr = []
+        self.frontLineMcuIconsDict = dict()
+        nextIconId = self.startFrontLineId
         for pair in self.frontLineMcuIconPairs:
             leftMcuIcon = pair['left']
             rightMcuIcon = pair['rigth']
@@ -204,7 +283,8 @@ class Mission:
             zMcuIcon.options["ZPos"] = zF
             zMcuIcon.options["Coalitions"] = [1, 2]
             #print(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
-            self.frontLineMcuIcons.append(zMcuIcon)
+            self.frontLineMcuIconsArr.append(zMcuIcon)
+            self.frontLineMcuIconsDict[nextIconId] = zMcuIcon
         print(f"Front Line generated up to {nextIconId} point")
 
     def calcDistance(self, p1, p2):
@@ -216,29 +296,40 @@ class Mission:
 
     def directFrontLine(self):
         donePoints = []
-        if len(self.frontLineMcuIcons) == 0:
+        totalD = 0
+        if len(self.frontLineMcuIconsArr) == 0:
             return
         
-        firstPoint = self.frontLineMcuIcons[0]
+        firstPoint = self.frontLineMcuIconsArr[0]
         currentPoint = firstPoint
-        self.frontLineMcuIcons.remove(currentPoint)
+        self.frontLineMcuIconsArr.remove(currentPoint)
         donePoints.append(currentPoint)
 
-        while self.frontLineMcuIcons:
-            nextPoint = self.frontLineMcuIcons[0]
+        while self.frontLineMcuIconsArr:
+            nextPoint = self.frontLineMcuIconsArr[0]
             minD = self.calcDistance(currentPoint, nextPoint)
-            for point in self.frontLineMcuIcons:
+            for point in self.frontLineMcuIconsArr:
                 d = self.calcDistance(currentPoint, point)
                 if d <= minD:
                     minD = d
                     nextPoint = point
+            totalD += d
             donePoints.append(nextPoint)
-            self.frontLineMcuIcons.remove(nextPoint)
+            self.frontLineMcuIconsArr.remove(nextPoint)
             currentPoint.options["Targets"] = [nextPoint.options["Index"]]
             currentPoint = nextPoint
 
         currentPoint.options["Targets"] = [firstPoint.options["Index"]]
-        self.frontLineMcuIcons = donePoints
+        averageD = totalD / len(donePoints)
+
+        # Remove too far Targets
+        for point in donePoints:
+            nextPoint = self.frontLineMcuIconsDict[point.options["Targets"][0]]
+            d = self.calcDistance(point, nextPoint)
+            if d > averageD * 2:
+                point.options["Targets"] = []
+
+        self.frontLineMcuIconsArr = donePoints
         print("Front Line directed")
 
 
@@ -247,7 +338,7 @@ class Mission:
         self.frontLineString += "\n"
         self.frontLineString += "Options\n"
         self.frontLineString += self.options.getRawData()
-        for mcuIcon in self.frontLineMcuIcons:
+        for mcuIcon in self.frontLineMcuIconsArr:
             self.frontLineString += "\n"
             self.frontLineString += "MCU_Icon\n"
             self.frontLineString += "{\n"
@@ -264,3 +355,62 @@ class Mission:
         with open(filePath, "w") as f:
             f.write(self.frontLineString)
         print("Front Line saved to Mission file!")
+
+    def calcVisual(self):
+        self.visual.maxX = self.mcuIconsArr[0].x()
+        self.visual.maxY = self.mcuIconsArr[0].y()
+        self.visual.maxZ = self.mcuIconsArr[0].z()
+        self.visual.minX = self.mcuIconsArr[0].x()
+        self.visual.minY = self.mcuIconsArr[0].y()
+        self.visual.minZ = self.mcuIconsArr[0].z()
+        allMcuIcons = self.mcuIconsArr + self.frontLineMcuIconsArr
+        for mcuIcon in allMcuIcons:
+            if mcuIcon.x() > self.visual.maxX: self.visual.maxX = mcuIcon.x()
+            if mcuIcon.y() > self.visual.maxY: self.visual.maxY = mcuIcon.y()
+            if mcuIcon.z() > self.visual.maxZ: self.visual.maxZ = mcuIcon.z()
+            if mcuIcon.x() < self.visual.minX: self.visual.minX = mcuIcon.x()
+            if mcuIcon.y() < self.visual.minY: self.visual.minY = mcuIcon.y()
+            if mcuIcon.z() < self.visual.minZ: self.visual.minZ = mcuIcon.z()
+        dX = self.visual.maxX - self.visual.minX
+        dY = self.visual.maxY - self.visual.minY
+        dZ = self.visual.maxZ - self.visual.minZ
+
+        kX = self.visual.imgW / dX
+        kZ = self.visual.imgH / dZ
+        self.visual.kX = min(kX, kZ)
+        self.visual.kY = min(kX, kZ)
+        self.visual.kZ = min(kX, kZ)
+
+        ###############################################
+        self.visual.kX = kX # make broken proportions #
+        ###############################################
+
+        print("Bounds calculated:")
+        print(f"  x:  {self.visual.minX:10.3f} .. {self.visual.maxX:10.3f} -> {dX:10.3f}")
+        print(f"  y:  {self.visual.minY:10.3f} .. {self.visual.maxY:10.3f} -> {dY:10.3f}")
+        print(f"  z:  {self.visual.minZ:10.3f} .. {self.visual.maxZ:10.3f} -> {dZ:10.3f}")
+        print(f"  kX: {self.visual.kX}")
+        print(f"  kY: {self.visual.kY}")
+        print(f"  kZ: {self.visual.kZ}")
+        print(f"  ratio orig: {dZ/dY}")
+        print(f"  ratio canv: {self.visual.imgW/self.visual.imgH}")
+
+
+    def plotVisual(self):
+        for mcuIcon in self.mcuIconsArr:
+            self.visual.placePoint(mcuIcon)
+        for mcuIcon in self.mcuIconsArr:
+            curTargets = mcuIcon.options['Targets']
+            for target in curTargets:
+                tarMcuIcon = self.mcuIconsDict[target]
+                self.visual.placeLine(mcuIcon, tarMcuIcon)
+        for mcuIcon in self.frontLineMcuIconsArr:
+            self.visual.placePoint(mcuIcon)
+        for mcuIcon in self.frontLineMcuIconsArr:
+            curTargets = mcuIcon.options['Targets']
+            for target in curTargets:
+                tarMcuIcon = self.frontLineMcuIconsDict[target]
+                self.visual.placeLine(mcuIcon, tarMcuIcon, isFrontLine=True)
+
+    def saveVisual(self, filePath):
+        self.visual.img.save(filePath, "PNG")

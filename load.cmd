@@ -11,7 +11,10 @@ SET done=0
 FOR %%x IN (%*) DO SET /A argCount+=1
 IF %argCount% EQU 1 (
   ECHO Parse mission file...
-  python3 parser.py --mission-in-file %1 --coal-json-file "result/test_coalitions.json" --mission-out-file "result/FrontLine.Mission"
+  python3 parser.py --mission-in-file %1 ^
+                    --coal-json-file "result/test_coalitions.json" ^
+                    --mission-out-file "result/FrontLine.Mission" ^
+                    --mission-img-file "result/FrontLine.png"
   SET done=1
 )
 IF %done% EQU 1 (
