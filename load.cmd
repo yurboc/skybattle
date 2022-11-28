@@ -5,16 +5,20 @@ REM SET MISSION_IN="data/HAW_StalingradNorth_Graph/HAW_StalingradNorth_Graph.Mis
 REM SET MISSION_OUT="result/out.Mission"
 REM python parser.py --mission-in-file %MISSION_IN% --mission-out-file %MISSION_OUT%
 
-PUSHD %~dp0
+SET APP_DIR="%~dp0app"
+SET RESULT_DIR="..\result"
+
+ECHO Entering %APP_DIR%
+PUSHD %APP_DIR%
 SET argCount=0
 SET done=0
 FOR %%x IN (%*) DO SET /A argCount+=1
 IF %argCount% EQU 1 (
   ECHO Parse mission file...
   python3 parser.py --mission-in-file %1 ^
-                    --coal-json-file "result/test_coalitions.json" ^
-                    --mission-out-file "result/FrontLine.Mission" ^
-                    --mission-img-file "result/FrontLine.png"
+                    --coal-json-file "%RESULT_DIR%\test_coalitions.json" ^
+                    --mission-out-file "%RESULT_DIR%\FrontLine.Mission" ^
+                    --mission-img-file "%RESULT_DIR%\FrontLine.png"
   SET done=1
 )
 IF %done% EQU 1 (
