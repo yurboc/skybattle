@@ -21,6 +21,7 @@ class Mission:
         self.frontLineMcuIconsDict = dict()
         self.frontLineString = ""
         self.startFrontLineId = 1000
+        self.ignoredOptions = ["Def_Force"]
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
@@ -86,12 +87,20 @@ class Mission:
         print("Coalitions saved to JSON!")
 
     def loadCoalitionForceJson(self, filePath):
+        self.coalitionsAndForce = dict()
         with open(filePath, "r") as f:
             inJsonStr = f.read()
             self.coalitionsAndForce = json.loads(inJsonStr,
                 object_hook=lambda d: {  int(k) if k.lstrip('-').isdigit()
                                                 else k: v for k, v in d.items()})
         print("Coalitions loaded from JSON!")
+
+    def updateOrigMission(self):
+        for mcuIcon in self.mcuIconsArr:
+            curIndex = int(mcuIcon.options['Index'])
+            mcuIconParams = self.coalitionsAndForce[curIndex]
+            mcuIcon.options['Coalitions'] = [mcuIconParams["coalition"]]
+            mcuIcon.options['Def_Force'] = mcuIconParams["force"]
 
     def calcFrontLinePairs(self):
         self.frontLineMcuIconPairs = []
@@ -212,6 +221,8 @@ class Mission:
             self.frontLineString += "MCU_Icon\n"
             self.frontLineString += "{\n"
             for option in mcuIcon.options:
+                if option in self.ignoredOptions:
+                    continue
                 self.frontLineString += f"  {option} = {mcuIcon.options[option]};\n"
             self.frontLineString += "}\n"
         self.frontLineString += "\n"

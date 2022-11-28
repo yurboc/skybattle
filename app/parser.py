@@ -40,6 +40,7 @@ if __name__ == '__main__':
     mission.calcCoalitionAndForce()
     #mission.saveCoalitionForceJson(config_in_path)
     mission.loadCoalitionForceJson(config_in_path)
+    mission.updateOrigMission()
 
     # Prepare Front Line
     mission.calcFrontLinePairs()
