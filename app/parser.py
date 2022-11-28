@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--mission-in-file', type=str, dest='mis_in', action='store', help='Path to input mission file')
     parser.add_argument('-o', '--mission-out-file', type=str, dest='mis_out', action='store', help='Path to output mission file')
     parser.add_argument('-v', '--mission-img-file', type=str, dest='mis_img', action='store', help='Path to mission visualization')
-    parser.add_argument('-c', '--coal-json-file', type=str, dest='coal_out', action='store', help='Path to output coalitions JSON')
+    parser.add_argument('-c', '--config-in-file', type=str, dest='conf_in', action='store', help='Path to input JSON config')
 
     # Show help if no arguments provided
     if len(sys.argv)==1:
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     mission_in_path = args.mis_in
     mission_out_path = args.mis_out
     mission_img_path = args.mis_img
-    coalitions_out_path = args.coal_out
+    config_in_path = args.conf_in
 
     # Check files
     if not os.path.exists(mission_in_path):
@@ -38,7 +38,8 @@ if __name__ == '__main__':
 
     # Save Indexes, Coalitions and Forces to JSON
     mission.calcCoalitionAndForce()
-    mission.saveCoalitionForceJson(coalitions_out_path)
+    #mission.saveCoalitionForceJson(config_in_path)
+    mission.loadCoalitionForceJson(config_in_path)
 
     # Prepare Front Line
     mission.calcFrontLinePairs()

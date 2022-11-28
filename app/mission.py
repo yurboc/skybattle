@@ -85,6 +85,14 @@ class Mission:
             f.write(resJson)
         print("Coalitions saved to JSON!")
 
+    def loadCoalitionForceJson(self, filePath):
+        with open(filePath, "r") as f:
+            inJsonStr = f.read()
+            self.coalitionsAndForce = json.loads(inJsonStr,
+                object_hook=lambda d: {  int(k) if k.lstrip('-').isdigit()
+                                                else k: v for k, v in d.items()})
+        print("Coalitions loaded from JSON!")
+
     def calcFrontLinePairs(self):
         self.frontLineMcuIconPairs = []
         pairsCount = 0

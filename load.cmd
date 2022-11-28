@@ -7,6 +7,7 @@ REM python parser.py --mission-in-file %MISSION_IN% --mission-out-file %MISSION_
 
 SET APP_DIR="%~dp0app"
 SET RESULT_DIR="..\result"
+SET CONFIG_FILE="..\data\coalitions_demo.json"
 
 ECHO Entering %APP_DIR%
 PUSHD %APP_DIR%
@@ -16,7 +17,7 @@ FOR %%x IN (%*) DO SET /A argCount+=1
 IF %argCount% EQU 1 (
   ECHO Parse mission file...
   python3 parser.py --mission-in-file %1 ^
-                    --coal-json-file "%RESULT_DIR%\test_coalitions.json" ^
+                    --config-in-file "%CONFIG_FILE%" ^
                     --mission-out-file "%RESULT_DIR%\FrontLine.Mission" ^
                     --mission-img-file "%RESULT_DIR%\FrontLine.png"
   SET done=1
