@@ -13,7 +13,7 @@ files_dir = os.path.join("..", "data", "incoming")
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
+    level=logging.INFO
 )
 
 async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
