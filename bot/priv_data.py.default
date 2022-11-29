@@ -1,0 +1,3 @@
+# rename this file to "priv_data.py"
+
+bot_token = "1234567890:ABCDEFJHIJKLMNOPQRSUVXYZ1234example" # replace by actual bot token
