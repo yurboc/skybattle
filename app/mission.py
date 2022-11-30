@@ -255,14 +255,15 @@ class Mission:
         dY = self.visual.maxY - self.visual.minY
         dZ = self.visual.maxZ - self.visual.minZ
 
-        kX = self.visual.imgW / dX
-        kZ = self.visual.imgH / dZ
+        kX = self.visual.imgH / dX
+        kZ = self.visual.imgW / dZ
         self.visual.kX = min(kX, kZ)
         self.visual.kY = min(kX, kZ)
         self.visual.kZ = min(kX, kZ)
 
         ###############################################
         self.visual.kX = kX # make broken proportions #
+        self.visual.kZ = kZ # make broken proportions #
         ###############################################
 
         print("Bounds calculated:")
@@ -272,7 +273,7 @@ class Mission:
         print(f"  kX: {self.visual.kX}")
         print(f"  kY: {self.visual.kY}")
         print(f"  kZ: {self.visual.kZ}")
-        print(f"  ratio orig: {dZ/dY}")
+        print(f"  ratio orig: {dZ/dX}")
         print(f"  ratio canv: {self.visual.imgW/self.visual.imgH}")
 
 

@@ -12,10 +12,10 @@ class Vizualization:
         self.kY = 1 # Y(picture) = Z(orig) * kY
         self.kZ = 1 # Z(picture) = Z(orig) * kZ
         self.imgW = 2048 # image X: 0..1023
-        self.imgH = 768  # image Z: 0..767
+        self.imgH = 768  # image Y: 0..767
         self.imgF = 10   # frame: 10 px: example for X: (0..9), 10..1033, (1034..1043)
         self.cnvW = self.imgW + 2 * self.imgF # canvas X: image + frame
-        self.cnvH = self.imgH + 2 * self.imgF # canvas Z: image + frame
+        self.cnvH = self.imgH + 2 * self.imgF # canvas Y: image + frame
         self.imgX1 = self.imgF
         self.imgY1 = self.imgF
         self.imgX2 = self.imgX1 + self.imgW - 1
@@ -39,8 +39,8 @@ class Vizualization:
         self.draw.rectangle([(self.cnvW-1, self.cnvH-1), (0, self.imgY2+1)], (255, 255, 255, 0), (200, 200, 200, 0))
 
     def mapMcuPointToImage(self, mcuPoint):
-        x = (mcuPoint.x() - self.minX) * self.kX + self.imgF
-        y = (mcuPoint.z() - self.minZ) * self.kZ + self.imgF
+        y = (mcuPoint.x() - self.minX) * self.kX + self.imgF # map X_of_mcu_point to Y_of_image
+        x = (mcuPoint.z() - self.minZ) * self.kZ + self.imgF # map Z_of_mcu_point to X_of_image
         return (int(x), int(y))
 
     def placePoint(self, mcuIcon):
