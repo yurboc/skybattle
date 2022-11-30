@@ -292,6 +292,8 @@ class Mission:
             for target in curTargets:
                 tarMcuIcon = self.frontLineMcuIconsDict[target]
                 self.visual.placeLine(mcuIcon, tarMcuIcon, isFrontLine=True)
+        for mcuIcon in self.mcuIconsArr + self.frontLineMcuIconsArr:
+            self.visual.placeCaption(mcuIcon)
 
     def saveVisual(self, filePath):
         self.visual.saveToFile(filePath)
