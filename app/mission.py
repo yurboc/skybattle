@@ -211,6 +211,10 @@ class Mission:
         self.frontLineMcuIconsArr = donePoints
         print("Front Line directed")
 
+    def updateDirectFrontLine(self):
+        pass
+        print("Front Line direction updated with coalition info (FICTIVE)")
+
 
     def frontLineToString(self):
         self.frontLineString = "# Mission File Version = 1.0;\n"
