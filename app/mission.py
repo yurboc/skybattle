@@ -22,6 +22,7 @@ class Mission:
         self.frontLineString = ""
         self.startFrontLineId = 1000
         self.ignoredOptions = ["Def_Force"]
+        self.replacedOptions = {"LineType": 12}
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
@@ -150,14 +151,14 @@ class Mission:
             totalForce = leftForce + rightForce
             distFromLeft = (leftForce / totalForce)
             xF = x1 + (x2-x1)*distFromLeft
-            yF = y1 + (y2-y1)*distFromLeft
+            #yF = y1 + (y2-y1)*distFromLeft
             zF = z1 + (z2-z1)*distFromLeft
 
             nextIconId += 1
             zMcuIcon = copy.deepcopy(leftMcuIcon)
             zMcuIcon.options["Index"] = nextIconId
             zMcuIcon.options["XPos"] = xF
-            zMcuIcon.options["YPos"] = yF
+            zMcuIcon.options["YPos"] = 0.00 # do not use yF, always 0
             zMcuIcon.options["ZPos"] = zF
             zMcuIcon.options["Coalitions"] = [1, 2]
             #print(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
@@ -220,10 +221,16 @@ class Mission:
             self.frontLineString += "\n"
             self.frontLineString += "MCU_Icon\n"
             self.frontLineString += "{\n"
-            for option in mcuIcon.options:
-                if option in self.ignoredOptions:
+            for optionName in mcuIcon.options:
+                optionValue = mcuIcon.options[optionName]
+                # Ignore option
+                if optionName in self.ignoredOptions:
                     continue
-                self.frontLineString += f"  {option} = {mcuIcon.options[option]};\n"
+                # Replace value for option
+                if optionName in self.replacedOptions:
+                    optionValue = self.replacedOptions[optionName]
+                # Place option to string
+                self.frontLineString += f"  {optionName} = {optionValue};\n"
             self.frontLineString += "}\n"
         self.frontLineString += "\n"
         self.frontLineString += "# end of file"
