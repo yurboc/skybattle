@@ -22,7 +22,7 @@ class Mission:
         self.frontLineString = ""
         self.startFrontLineId = 1000
         self.ignoredOptions = ["Def_Force"]
-        self.replacedOptions = {"LineType": 12}
+        self.replacedOptions = {"LineType": 13}
     
     def loadMissionFromFile(self, filePath):
         # Load Options from file
