@@ -42,8 +42,9 @@ class Vizualization:
         self.draw.rectangle([(self.cnvW-1, self.cnvH-1), (0, self.imgY2+1)], (255, 255, 255, 0))
 
     def mapMcuPointToImage(self, mcuPoint):
-        y = (mcuPoint.x() - self.minX) * self.kX + self.imgF # map X_of_mcu_point to Y_of_image
         x = (mcuPoint.z() - self.minZ) * self.kZ + self.imgF # map Z_of_mcu_point to X_of_image
+        y = (mcuPoint.x() - self.minX) * self.kX + self.imgF # map X_of_mcu_point to Y_of_image
+        y = 2 * self.imgF + self.imgH - y                    # flip vertical
         return (int(x), int(y))
 
     def placePoint(self, mcuIcon):
