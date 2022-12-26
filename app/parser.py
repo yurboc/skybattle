@@ -27,7 +27,6 @@ def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     mission.calcFrontLinePairs()
     mission.calcFrontLine()
     mission.directFrontLine()
-    mission.updateDirectFrontLine()
     mission.frontLineToString()
     #mission.printFrontLineAsString()
     mission.saveFrontLineToFile(mission_out_path)

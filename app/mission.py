@@ -21,7 +21,11 @@ class Mission:
         self.frontLineMcuIconsDict = dict()
         self.frontLineString = ""
         self.startFrontLineId = 1000
-        self.ignoredOptions = ["Def_Force"]
+        self.ignoredOptions = [
+            "Def_Force",
+            "Conn_Targets",
+            "FrontLine_Targets",
+        ]
         self.replacedOptions = {"LineType": 13}
     
     def loadMissionFromFile(self, filePath):
@@ -120,7 +124,7 @@ class Mission:
                 tarForce = self.coalitionsAndForce[tarIndex]["force"]
                 if curCoalition == tarCoalition:
                     continue
-                self.frontLineMcuIconPairs.append({"left": mcuIcon, "rigth": tarMcuIcon, "leftForce": curForce, "rightForce": tarForce})
+                self.frontLineMcuIconPairs.append({"rigth": mcuIcon, "left": tarMcuIcon, "rightForce": curForce, "leftForce": tarForce})
                 pairsCount += 1
         print(f"Front Line pairs prepared: {pairsCount} pairs")
         #print(f"======= BEGIN =====")
@@ -161,6 +165,11 @@ class Mission:
             zMcuIcon.options["YPos"] = 0.00 # do not use yF, always 0
             zMcuIcon.options["ZPos"] = zF
             zMcuIcon.options["Coalitions"] = [1, 2]
+            zMcuIcon.options["Conn_Targets"] = [leftMcuIcon.options["Index"], rightMcuIcon.options["Index"]]
+
+            leftMcuIcon.options["FrontLine_Targets"] = leftMcuIcon.options.get("FrontLine_Targets",list()) + [zMcuIcon.options["Index"]]
+            rightMcuIcon.options["FrontLine_Targets"] = rightMcuIcon.options.get("FrontLine_Targets",list()) + [zMcuIcon.options["Index"]]
+
             #print(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
             self.frontLineMcuIconsArr.append(zMcuIcon)
             self.frontLineMcuIconsDict[nextIconId] = zMcuIcon
@@ -174,47 +183,62 @@ class Mission:
         return D
 
     def directFrontLine(self):
-        donePoints = []
-        totalD = 0
-        if len(self.frontLineMcuIconsArr) == 0:
+        # Clear targets
+        for point in self.frontLineMcuIconsArr:
+            point.options["Targets"] = []
+        # Calculate targets
+        for point in self.frontLineMcuIconsArr:
+            # FrontLine point always have 2 connections: to coalition "1" (red) and to coalition "2" (blue)
+            redPoint = self.mcuIconsDict[point.options["Conn_Targets"][0]]
+            bluePoint = self.mcuIconsDict[point.options["Conn_Targets"][1]]
+            connectionsToRed = redPoint.options["FrontLine_Targets"]
+            connectionsToBlue = bluePoint.options["FrontLine_Targets"]
+            self.frontLineFromPoints(redPoint, connectionsToRed)
+            self.frontLineFromPoints(bluePoint, connectionsToBlue)
+            # point.options["Hint"] = "r:{}, b:{}".format(connectionsToRed, connectionsToBlue) # debug
+        print("Front Line direction updated with coalition info")
+
+    def frontLineDirectVector(self, pointT, pointA, pointB):
+        ax = pointA.options["XPos"]
+        az = pointA.options["ZPos"]
+        bx = pointB.options["XPos"]
+        bz = pointB.options["ZPos"]
+        tx = pointT.options["XPos"]
+        tz = pointT.options["ZPos"]
+        tc = pointT.options["Coalitions"][0]
+        s = (bx-ax)*(tz-az)-(bz-az)*(tx-ax)
+        if s > 0:
+            return 1 if tc == 1 else -1
+        elif s < 0:
+            return -1 if tc == 1 else 1
+        else:
+            return 0
+
+    def frontLineFromPoints(self, basePoint, points):
+        # Check: at least 2 points
+        if len(points) < 2:
             return
-        
-        firstPoint = self.frontLineMcuIconsArr[0]
-        currentPoint = firstPoint
-        self.frontLineMcuIconsArr.remove(currentPoint)
-        donePoints.append(currentPoint)
 
-        while self.frontLineMcuIconsArr:
-            nextPoint = self.frontLineMcuIconsArr[0]
-            minD = self.calcDistance(currentPoint, nextPoint)
-            for point in self.frontLineMcuIconsArr:
-                d = self.calcDistance(currentPoint, point)
-                if d <= minD:
-                    minD = d
-                    nextPoint = point
-            totalD += d
-            donePoints.append(nextPoint)
-            self.frontLineMcuIconsArr.remove(nextPoint)
-            currentPoint.options["Targets"] = [nextPoint.options["Index"]]
-            currentPoint = nextPoint
+        # Interconnect all points
+        for pointIdA in points:
+            pointA = self.frontLineMcuIconsDict[pointIdA]
+            minDist = None
+            nearPoint = None
+            for pointIdB in points:
+                if pointIdA == pointIdB:
+                    continue
+                pointB = self.frontLineMcuIconsDict[pointIdB]
+                d = self.calcDistance(pointA, pointB)
+                if (minDist is None) or (d < minDist):
+                    minDist = d
+                    nearPoint = pointB
 
-        currentPoint.options["Targets"] = [firstPoint.options["Index"]]
-        averageD = totalD / len(donePoints)
-
-        # Remove too far Targets
-        for point in donePoints:
-            nextPoint = self.frontLineMcuIconsDict[point.options["Targets"][0]]
-            d = self.calcDistance(point, nextPoint)
-            if d > averageD * 2:
-                point.options["Targets"] = []
-
-        self.frontLineMcuIconsArr = donePoints
-        print("Front Line directed")
-
-    def updateDirectFrontLine(self):
-        pass
-        print("Front Line direction updated with coalition info (FICTIVE)")
-
+            if nearPoint:
+                dir = self.frontLineDirectVector(basePoint, pointA, nearPoint)
+                if dir < 0:
+                    pointA.options["Targets"] = [nearPoint.options["Index"]]
+                else:
+                    nearPoint.options["Targets"] = [pointA.options["Index"]]
 
     def frontLineToString(self):
         self.frontLineString = "# Mission File Version = 1.0;\n"
