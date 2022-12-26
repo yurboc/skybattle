@@ -24,6 +24,8 @@ class Mission:
         self.ignoredOptions = [
             "Def_Force",
             "Conn_Targets",
+            "Conn_Hint",
+            "Rev_Targets",
             "FrontLine_Targets",
         ]
         self.replacedOptions = {"LineType": 13}
@@ -186,6 +188,7 @@ class Mission:
         # Clear targets
         for point in self.frontLineMcuIconsArr:
             point.options["Targets"] = []
+            point.options["Rev_Targets"] = []
         # Calculate targets
         for point in self.frontLineMcuIconsArr:
             # FrontLine point always have 2 connections: to coalition "1" (red) and to coalition "2" (blue)
@@ -195,7 +198,38 @@ class Mission:
             connectionsToBlue = bluePoint.options["FrontLine_Targets"]
             self.frontLineFromPoints(redPoint, connectionsToRed)
             self.frontLineFromPoints(bluePoint, connectionsToBlue)
-            # point.options["Hint"] = "r:{}, b:{}".format(connectionsToRed, connectionsToBlue) # debug
+            point.options["Conn_Hint"] = "r:{}, b:{}".format(connectionsToRed, connectionsToBlue) # debug
+        # Join segments
+        for point in self.frontLineMcuIconsArr:
+            # Skip points with target
+            if point.options["Targets"]:
+                continue
+            # Try to find target for other points
+            possibleTargetPoints = []
+            redPoint = self.mcuIconsDict[point.options["Conn_Targets"][0]]
+            bluePoint = self.mcuIconsDict[point.options["Conn_Targets"][1]]
+            levelOnePoints = redPoint.options["Targets"] + bluePoint.options["Targets"]
+            for nearPointId in levelOnePoints:
+                #print ("TEST-1 {}".format(nearPointId))
+                nearPoint = self.mcuIconsDict[nearPointId]
+                frontLinePoints = nearPoint.options.get("FrontLine_Targets",[])
+                for frontLinePointId in frontLinePoints:
+                    levelOneFrontLinePoint = self.frontLineMcuIconsDict[frontLinePointId]
+                    if levelOneFrontLinePoint.options["Rev_Targets"]:
+                        # This point already have connections
+                        continue
+                    if frontLinePointId == point.options["Index"]:
+                        # This point same as source point
+                        continue
+                    if frontLinePointId in point.options["Rev_Targets"]:
+                        # This connection creates loop of 2 points
+                        continue
+                    #print ("SELECT-2 {} -- {}".format(point.options["Index"], frontLinePointId))
+                    possibleTargetPoints.append(levelOneFrontLinePoint)
+            for targetPoint in possibleTargetPoints:
+                point.options["Targets"].append(targetPoint.options["Index"])
+                break # NOTE: take exactly one first item
+        # Done
         print("Front Line direction updated with coalition info")
 
     def frontLineDirectVector(self, pointT, pointA, pointB):
@@ -237,8 +271,10 @@ class Mission:
                 dir = self.frontLineDirectVector(basePoint, pointA, nearPoint)
                 if dir < 0:
                     pointA.options["Targets"] = [nearPoint.options["Index"]]
+                    nearPoint.options["Rev_Targets"] = [pointA.options["Index"]]
                 else:
                     nearPoint.options["Targets"] = [pointA.options["Index"]]
+                    pointA.options["Rev_Targets"] = [nearPoint.options["Index"]]
 
     def frontLineToString(self):
         self.frontLineString = "# Mission File Version = 1.0;\n"

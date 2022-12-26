@@ -80,7 +80,7 @@ MCU_Icon
 MCU_Icon
 {
   Index = 1002;
-  Targets = [];
+  Targets = [1001];
   Objects = [];
   XPos = 102968.7745;
   YPos = 0.0;
@@ -256,7 +256,7 @@ MCU_Icon
 MCU_Icon
 {
   Index = 1010;
-  Targets = [];
+  Targets = [1012];
   Objects = [];
   XPos = 146235.7135;
   YPos = 0.0;

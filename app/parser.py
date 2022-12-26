@@ -18,7 +18,7 @@ def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     mission.printMissionStat()
 
     # Save Indexes, Coalitions and Forces to JSON
-    mission.calcCoalitionAndForce()
+    #mission.calcCoalitionAndForce()
     #mission.saveCoalitionForceJson(config_in_path)
     mission.loadCoalitionForceJson(config_in_path)
     mission.updateOrigMission()
