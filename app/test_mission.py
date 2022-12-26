@@ -5,11 +5,11 @@ import os
 
 from mission import Mission
 
-RESULT_DIR="../result"
-CONFIG_FILE="../data/coalitions_demo.json"
-MISSION_FILE_IN="../data/HAW_StalingradNorth_Graph/HAW_StalingradNorth_Graph.Mission"
-MISSION_FILE_OUT="../result/test_result.Mission"
-MISSION_FILE_ETH="../data/ethalon/ethalon_FrontLine.Mission"
+RESULT_DIR="result"
+CONFIG_FILE="data/coalitions_demo.json"
+MISSION_FILE_IN="data/HAW_StalingradNorth_Graph/HAW_StalingradNorth_Graph.Mission"
+MISSION_FILE_OUT="result/test_result.Mission"
+MISSION_FILE_ETH="data/ethalon/ethalon_FrontLine.Mission"
 
 def setup():
     # Check files
