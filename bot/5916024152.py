@@ -35,7 +35,7 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"File {new_file_path} saved")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logging.info(f"Start command from {update.effective_chat.id}")
+    logging.info(f"Command 'start' from {update.effective_chat.id}")
     mission_file_name = os.path.join(files_dir, f"{update.effective_chat.id}.Mission")
     config_file_name = os.path.join(files_dir, f"{update.effective_chat.id}.json")
     if os.path.exists(mission_file_name):
@@ -45,6 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Начнём! Закидывай файлы")
 
 async def process(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info(f"Command 'process' from {update.effective_chat.id}")
     mission_in_path = os.path.join(files_dir, f"{update.effective_chat.id}.Mission")
     config_in_path = os.path.join(files_dir, f"{update.effective_chat.id}.json")
     mission_out_path = os.path.join(files_dir, f"{update.effective_chat.id}_out.Mission")
