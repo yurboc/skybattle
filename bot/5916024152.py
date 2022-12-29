@@ -35,6 +35,7 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"File {new_file_path} saved")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info(f"Start command from {update.effective_chat.id}")
     mission_file_name = os.path.join(files_dir, f"{update.effective_chat.id}.Mission")
     config_file_name = os.path.join(files_dir, f"{update.effective_chat.id}.json")
     if os.path.exists(mission_file_name):
