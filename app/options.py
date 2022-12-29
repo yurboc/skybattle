@@ -1,4 +1,5 @@
 import os
+import logging
 
 class Options:
     def __init__(self):
@@ -7,7 +8,7 @@ class Options:
     def loadOptionsFromFile(self, filePath):
         self.rawData = ""
         linesCount = 0
-        print(f"Load Options from file: {os.path.basename(filePath)}")
+        logging.debug(f"Load Options from file: {os.path.basename(filePath)}")
         with open(filePath, "r") as f:
             fileLines = f.readlines()
             foundOptions = False
@@ -29,10 +30,10 @@ class Options:
                     self.rawData += line
                     linesCount += 1
                     break
-        print(f"Load Options done: {linesCount} lines")
+        logging.debug(f"Load Options done: {linesCount} lines")
 
     def printRawData(self):
-        print(self.rawData)
+        logging.debug(self.rawData)
 
     def getRawData(self):
         return self.rawData

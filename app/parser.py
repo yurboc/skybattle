@@ -1,13 +1,14 @@
 import argparse
 import sys
 import os
+import logging
 
 from mission import Mission
 
 def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     # Check files
     if not os.path.exists(mission_in_path):
-        print(f"Input file is not found: {mission_in_path}")
+        logging.debug(f"Input file is not found: {mission_in_path}")
         exit()
     
     # Parse input file
@@ -24,6 +25,7 @@ def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     mission.updateOrigMission()
 
     # Prepare Front Line
+    logging.debug("Start parsing")
     mission.calcFrontLinePairs()
     mission.calcFrontLine()
     mission.directFrontLine()
@@ -33,8 +35,16 @@ def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     mission.calcVisual()
     mission.plotVisual()
     mission.saveVisual(mission_img_path)
+    logging.debug("Parsing complete")
 
 if __name__ == '__main__':
+    # Prepare logging
+    logging.basicConfig(
+        filename='../result/parser.log',
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.DEBUG,
+    )
+
     # Prepare all arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--mission-in-file', type=str, dest='mis_in', action='store', help='Path to input mission file')

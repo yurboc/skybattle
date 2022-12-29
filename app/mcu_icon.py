@@ -10,10 +10,10 @@ class MCU_Icon:
         self.options = dict()
 
     def printRawData(self):
-        print(self.rawData)
+        logging.debug(self.rawData)
 
     def parse(self):
-        #print(f"===== ITEM BEGIN =====")
+        #logging.debug(f"===== ITEM BEGIN =====")
         self.options = dict()
         for optionStr in self.rawData.splitlines(keepends=False):
             if "=" not in optionStr:
@@ -26,9 +26,9 @@ class MCU_Icon:
             optionValue = optionArr[1].strip()
             optionValueObj = json.loads(optionValue)
             self.options[optionName] = optionValueObj
-            #print(f"{optionName}:{optionValue}")
-        #print(self.options)
-        #print(f"===== ITEM END =====")
+            #logging.debug(f"{optionName}:{optionValue}")
+        #logging.debug(self.options)
+        #logging.debug(f"===== ITEM END =====")
     def x(self):
         return self.options['XPos']
     def y(self):

@@ -2,12 +2,11 @@ import os
 import json
 import math
 import copy
-
+import logging
 
 from options import Options
 from mcu_icon import MCU_Icon
 from vizualization import Vizualization
-
 
 class Mission:
     def __init__(self):
@@ -38,7 +37,7 @@ class Mission:
         self.mcuIconsArr = []
         self.mcuIconsDict = dict()
         itemsCount = 0
-        print(f"Load MCU_Icon items from file: {os.path.basename(filePath)}")
+        logging.debug(f"Load MCU_Icon items from file: {os.path.basename(filePath)}")
         with open(filePath, "r") as f:
             fileLines = f.readlines()
             foundMCU = False
@@ -66,17 +65,17 @@ class Mission:
                     currentMcuStr = ""
                     foundMCU = False
                     continue
-        print(f"Load MCU_Icon done: {itemsCount} items")
+        logging.debug(f"Load MCU_Icon done: {itemsCount} items")
 
     def printMissionStat(self):
-        print(f"===== BEGIN =====")
-        print(f"Has Options    : {self.options.hasData()}")
-        print(f"MCU_Icon count : {len(self.mcuIconsArr)} total, {len(self.mcuIconsDict)} unique")
-        #print(f"==== OPTIONS ====")
+        logging.debug(f"===== BEGIN =====")
+        logging.debug(f"Has Options    : {self.options.hasData()}")
+        logging.debug(f"MCU_Icon count : {len(self.mcuIconsArr)} total, {len(self.mcuIconsDict)} unique")
+        #logging.debug(f"==== OPTIONS ====")
         #self.options.printRawData()
-        #print(f"=== MCU_ICONS ===")
+        #logging.debug(f"=== MCU_ICONS ===")
         #self.mcuIcons[0].printRawData()
-        print(f"====== END ======")
+        logging.debug(f"====== END ======")
 
     def calcCoalitionAndForce(self):
         self.coalitionsAndForce = dict()
@@ -85,13 +84,13 @@ class Mission:
             curCoalition = mcuIcon.options['Coalitions'][0]
             curForce = 50
             self.coalitionsAndForce[curIndex] = {"coalition": curCoalition, "force": curForce}
-        print("Coalitions calculated!")
+        logging.debug("Coalitions calculated!")
 
     def saveCoalitionForceJson(self, filePath):
         resJson = json.dumps(self.coalitionsAndForce, indent=2)
         with open(filePath, "w") as f:
             f.write(resJson)
-        print("Coalitions saved to JSON!")
+        logging.debug("Coalitions saved to JSON!")
 
     def loadCoalitionForceJson(self, filePath):
         self.coalitionsAndForce = dict()
@@ -100,7 +99,7 @@ class Mission:
             self.coalitionsAndForce = json.loads(inJsonStr,
                 object_hook=lambda d: {  int(k) if k.lstrip('-').isdigit()
                                                 else k: v for k, v in d.items()})
-        print("Coalitions loaded from JSON!")
+        logging.debug("Coalitions loaded from JSON!")
 
     def updateOrigMission(self):
         for mcuIcon in self.mcuIconsArr:
@@ -128,12 +127,12 @@ class Mission:
                     continue
                 self.frontLineMcuIconPairs.append({"rigth": mcuIcon, "left": tarMcuIcon, "rightForce": curForce, "leftForce": tarForce})
                 pairsCount += 1
-        print(f"Front Line pairs prepared: {pairsCount} pairs")
-        #print(f"======= BEGIN =====")
-        #print(f"=====  2 --> 1  ===")
+        logging.debug(f"Front Line pairs prepared: {pairsCount} pairs")
+        #logging.debug(f"======= BEGIN =====")
+        #logging.debug(f"=====  2 --> 1  ===")
         #for pair in self.frontLineMcuIconPairs:
-        #    print(f"  {pair['leftForce']}:{pair['left'].options['Index']} --> {pair['rigth'].options['Index']}:{pair['rightForce']}")
-        #print(f"======= END =======")
+        #    logging.debug(f"  {pair['leftForce']}:{pair['left'].options['Index']} --> {pair['rigth'].options['Index']}:{pair['rightForce']}")
+        #logging.debug(f"======= END =======")
 
     def calcFrontLine(self):
         self.frontLineMcuIconsArr = []
@@ -172,10 +171,10 @@ class Mission:
             leftMcuIcon.options["FrontLine_Targets"] = leftMcuIcon.options.get("FrontLine_Targets",list()) + [zMcuIcon.options["Index"]]
             rightMcuIcon.options["FrontLine_Targets"] = rightMcuIcon.options.get("FrontLine_Targets",list()) + [zMcuIcon.options["Index"]]
 
-            #print(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
+            #logging.debug(f"  front {nextIconId}: ({x1},{y1},{z1}) -- ({xF},{yF},{zF}) -- ({x2},{y2},{z2})")
             self.frontLineMcuIconsArr.append(zMcuIcon)
             self.frontLineMcuIconsDict[nextIconId] = zMcuIcon
-        print(f"Front Line generated up to {nextIconId} point")
+        logging.debug(f"Front Line generated up to {nextIconId} point")
 
     def calcDistance(self, p1, p2):
         dX = p2.options["XPos"] - p1.options["XPos"]
@@ -210,7 +209,7 @@ class Mission:
             bluePoint = self.mcuIconsDict[point.options["Conn_Targets"][1]]
             levelOnePoints = redPoint.options["Targets"] + bluePoint.options["Targets"]
             for nearPointId in levelOnePoints:
-                #print ("TEST-1 {}".format(nearPointId))
+                #logging.debug ("TEST-1 {}".format(nearPointId))
                 nearPoint = self.mcuIconsDict[nearPointId]
                 frontLinePoints = nearPoint.options.get("FrontLine_Targets",[])
                 for frontLinePointId in frontLinePoints:
@@ -224,13 +223,13 @@ class Mission:
                     if frontLinePointId in point.options["Rev_Targets"]:
                         # This connection creates loop of 2 points
                         continue
-                    #print ("SELECT-2 {} -- {}".format(point.options["Index"], frontLinePointId))
+                    #logging.debug ("SELECT-2 {} -- {}".format(point.options["Index"], frontLinePointId))
                     possibleTargetPoints.append(levelOneFrontLinePoint)
             for targetPoint in possibleTargetPoints:
                 point.options["Targets"].append(targetPoint.options["Index"])
                 break # NOTE: take exactly one first item
         # Done
-        print("Front Line direction updated with coalition info")
+        logging.debug("Front Line direction updated with coalition info")
 
     def frontLineDirectVector(self, pointT, pointA, pointB):
         ax = pointA.options["XPos"]
@@ -300,12 +299,12 @@ class Mission:
         self.frontLineString += "# end of file"
 
     def printFrontLineAsString(self):
-        print(self.frontLineString)
+        logging.debug(self.frontLineString)
 
     def saveFrontLineToFile(self, filePath):
         with open(filePath, "w") as f:
             f.write(self.frontLineString)
-        print("Front Line saved to Mission file!")
+        logging.debug("Front Line saved to Mission file!")
 
     def calcVisual(self):
         self.visual.maxX = self.mcuIconsArr[0].x()
@@ -337,15 +336,15 @@ class Mission:
         self.visual.kZ = kZ # make broken proportions #
         ###############################################
 
-        print("Bounds calculated:")
-        print(f"  x:  {self.visual.minX:10.3f} .. {self.visual.maxX:10.3f} -> {dX:10.3f}")
-        print(f"  y:  {self.visual.minY:10.3f} .. {self.visual.maxY:10.3f} -> {dY:10.3f}")
-        print(f"  z:  {self.visual.minZ:10.3f} .. {self.visual.maxZ:10.3f} -> {dZ:10.3f}")
-        print(f"  kX: {self.visual.kX}")
-        print(f"  kY: {self.visual.kY}")
-        print(f"  kZ: {self.visual.kZ}")
-        print(f"  ratio orig: {dZ/dX}")
-        print(f"  ratio canv: {self.visual.imgW/self.visual.imgH}")
+        logging.debug("Bounds calculated:")
+        logging.debug(f"  x:  {self.visual.minX:10.3f} .. {self.visual.maxX:10.3f} -> {dX:10.3f}")
+        logging.debug(f"  y:  {self.visual.minY:10.3f} .. {self.visual.maxY:10.3f} -> {dY:10.3f}")
+        logging.debug(f"  z:  {self.visual.minZ:10.3f} .. {self.visual.maxZ:10.3f} -> {dZ:10.3f}")
+        logging.debug(f"  kX: {self.visual.kX}")
+        logging.debug(f"  kY: {self.visual.kY}")
+        logging.debug(f"  kZ: {self.visual.kZ}")
+        logging.debug(f"  ratio orig: {dZ/dX}")
+        logging.debug(f"  ratio canv: {self.visual.imgW/self.visual.imgH}")
 
 
     def plotVisual(self):
