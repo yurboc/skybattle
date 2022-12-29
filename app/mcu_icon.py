@@ -1,4 +1,5 @@
 import json
+import logging
 
 class MCU_Icon:
     def __init__(self, mcuIconStr=""):

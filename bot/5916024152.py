@@ -12,6 +12,7 @@ app_path = os.path.join('..','app','parser.py')
 files_dir = os.path.join("..", "data", "incoming")
 
 logging.basicConfig(
+    filename='../result/telegram.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
