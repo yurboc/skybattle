@@ -2,8 +2,10 @@ import argparse
 import sys
 import os
 import logging
-
+import logging.handlers
 from mission import Mission
+
+LOGFILE = "../log/parser.log"
 
 def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
     # Check files
@@ -40,10 +42,11 @@ def main(mission_in_path, mission_out_path, mission_img_path, config_in_path):
 if __name__ == '__main__':
     # Prepare logging
     logging.basicConfig(
-        filename='../result/parser.log',
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[logging.handlers.TimedRotatingFileHandler(LOGFILE, when='midnight', backupCount=7)],
     )
+    logging.getLogger().addHandler(logging.StreamHandler())
 
     # Prepare all arguments
     parser = argparse.ArgumentParser()

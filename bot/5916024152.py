@@ -1,22 +1,35 @@
 import os
+import sys
 import subprocess
 import logging
+import logging.handlers
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from telegram.ext import MessageHandler, filters
 
-from priv_data import bot_token
+LOGFILE = "../log/telegram.log"
 
+# Path to mission parser
 app_python = "python3"
 app_path = os.path.join('..','app','parser.py')
 files_dir = os.path.join("..", "data", "incoming")
 
+# Setup logging
 logging.basicConfig(
-    filename='../result/telegram.log',
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    handlers=[logging.handlers.TimedRotatingFileHandler(LOGFILE, when='midnight', backupCount=7)],
 )
+logging.getLogger().addHandler(logging.StreamHandler())
 
+# Check file with credentials
+if os.path.exists("priv_data.py"):
+    from priv_data import bot_token
+else:
+    logging.error("Can't start: create 'priv_data.py' with credentials")
+    sys.exit(1)
+
+# Incoming files handler
 async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result_file = await context.bot.get_file(update.message.document)
     orig_file_name = update.message.document.file_name
@@ -34,6 +47,7 @@ async def downloader(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await result_file.download_to_drive(new_file_path)
     logging.info(f"File {new_file_path} saved")
 
+# Command 'start': clear files and states
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Command 'start' from {update.effective_chat.id}")
     mission_file_name = os.path.join(files_dir, f"{update.effective_chat.id}.Mission")
@@ -44,6 +58,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.unlink(config_file_name)
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Начнём! Закидывай файлы")
 
+# Command 'process': parse files
 async def process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Command 'process' from {update.effective_chat.id}")
     mission_in_path = os.path.join(files_dir, f"{update.effective_chat.id}.Mission")
@@ -93,7 +108,7 @@ async def process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     logging.info(f"Finish send files")
 
-
+# Main application
 if __name__ == '__main__':
     application = ApplicationBuilder().token(bot_token).build()
     
